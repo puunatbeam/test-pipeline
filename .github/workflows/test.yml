@@ -28,4 +28,3 @@ jobs:
             This is to show automatic PR creation
           title: "demo for auto pr"
           delete-branch: true
-          always-create: true
