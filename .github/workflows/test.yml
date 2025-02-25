@@ -17,6 +17,9 @@ jobs:
         run: |
           git fetch origin main:main
 
+      - name: check ref name
+        run: echo ${{ github.ref_name }}
+
       - name: Create Pull Request
         uses: peter-evans/create-pull-request@v7
         with:
