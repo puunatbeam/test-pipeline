@@ -16,6 +16,15 @@ jobs:
       - name: Update author information
         run: echo ${{ env.GIT_COMMIT_AUTHOR_NAME }} › AUTHOR
 
+      - name: Create and push branch
+        run: |
+          git config --global user.name "${{ env.GIT_COMMIT_AUTHOR_NAME }}"
+          git config --global user.email "${{ env.GIT_COMMIT_AUTHOR_EMAIL }}"
+          git checkout -b auto-pr-branch
+          git add AUTHOR
+          git commit -m "Update author information"
+          git push origin auto-pr-branch
+
       - name: Create Pull Request
         uses: peter-evans/create-pull-request@v6
         with:
