@@ -1,0 +1,51 @@
+name: Create Main Sync Pull Request
+
+on:
+  push:
+    branches:
+      - "release-*"
+
+jobs:
+  syncMain:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: main
+
+      - name: Fetch Latest Change
+        run: |
+          git fetch origin
+
+      - name: Configure Git User
+        run: |
+          git config --local user.email "github-actions[bot]@users.noreply.github.com"
+          git config --local user.name "github-actions[bot]"
+
+      - name: Get Last Commit Message
+        id: last_commit
+        run: |
+          LAST_COMMIT_MSG=$(git log origin/${{ github.ref_name }} -1 --pretty=%B | head -1 n)
+          echo "commit_message=$LAST_COMMIT_MSG" >> $GITHUB_ENV
+
+      - name: Extract PR Number from Commit Message
+        id: pr_number
+        run: |
+          PR_NUMBER=$(echo "${{ env.commit_message }}" | grep -oE "\(#([0-9]+)\)" | head -1 n | sed -E 's/\(#([0-9]+)\)/\1/')
+          if [ -z "$PR_NUMBER" ]; then
+            echo "No PR number found, setting to 'N/A'"
+            PR_NUMBER="N/A"
+          fi
+          echo "pr_number=$PR_NUMBER" >> $GITHUB_ENV
+          echo "pr_url=https://github.com/${{ github.repository }}/pull/$PR_NUMBER" >> $GITHUB_ENV
+
+      - name: Cherry-pick the latest commit from release branch
+        run: |
+          git cherry-pick ${{ github.sha }}
+
+      - name: Create Pull Request
+        uses: peter-evans/create-pull-request@v7
+        with:
+          branch: pr-#${{ env.pr_number }}-to-main
+          title: "${{ env.commit_message }} (to main)"
+          body: "Automated Cherry-picked From PR [#${{ env.pr_number }}](${{ env.pr_url }})"
